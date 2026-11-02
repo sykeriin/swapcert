@@ -41,7 +41,7 @@ class Trajectory:
         return json.dumps(asdict(self), sort_keys=True)
 
     @staticmethod
-    def from_json(s: str) -> "Trajectory":
+    def from_json(s: str) -> Trajectory:
         d = json.loads(s)
         d["events"] = [Event(**e) for e in d["events"]]
         return Trajectory(**d)
@@ -49,8 +49,7 @@ class Trajectory:
 
 def write_jsonl(path: str, trajs: list[Trajectory]) -> None:
     with open(path, "w") as f:
-        for t in trajs:
-            f.write(t.to_json() + "\n")
+        f.writelines(t.to_json() + "\n" for t in trajs)
 
 
 def read_jsonl(path: str) -> list[Trajectory]:

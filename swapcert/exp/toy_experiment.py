@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from swapcert.envs.toy import MockAgent, ToyEnv, make_tasks, run_real
+from swapcert.envs.toy import MockAgent, make_tasks, run_real
 from swapcert.fork.prefix import fork_run
 from swapcert.sim.toy_sim import ToySim
 

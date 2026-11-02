@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from swapcert.stats import estimators as E
-from swapcert.stats.betting import betting_classical, betting_ppi, wsr_mean_ci
+from swapcert.stats.betting import betting_ppi, wsr_mean_ci
 from swapcert.stats.decision import Verdict, decide, runs_needed, true_verdict
 from swapcert.stats.synthetic import make_population
 
