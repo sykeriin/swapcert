@@ -58,3 +58,17 @@ def runs_needed(resid_sd: float, half_width: float, alpha: float = 0.05, n_total
     if n_total:
         n0 = n0 / (1 + n0 / n_total)
     return int(n0) + 1
+
+
+MIN_DISCORDANT = 15
+
+
+def reliability_warning(d_real, min_discordant: int = MIN_DISCORDANT) -> str | None:
+    """CLT intervals undercover when few labelled tasks changed outcome (observed in our
+    Monte Carlo: ~85-90% coverage with ~2-5 discordant runs).  Flag it instead of staying silent."""
+    k = int((abs(__import__("numpy").asarray(d_real, float)) > 1e-9).sum())
+    if k < min_discordant:
+        return (f"only {k} of {len(d_real)} real runs changed outcome (<{min_discordant}); "
+                "normal-approximation intervals may undercover -- treat the verdict as provisional "
+                "or use the betting interval")
+    return None
