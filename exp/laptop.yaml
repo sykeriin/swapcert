@@ -1,0 +1,13 @@
+# Laptop (RTX 3050 4 GB) serving config.  Start two servers first -- see README "Laptop runbook".
+agent:                       # GPU server (swap this model for model B)
+  model: ollama_chat/qwen3:4b
+  api_base: http://localhost:11434
+user:                        # FIXED user simulator, CPU-only server. Delete this block for telecom solo mode.
+  model: ollama_chat/qwen3:1.7b
+  api_base: http://localhost:11435
+domain: retail               # retail | airline | telecom
+max_steps: 40
+seed: 300
+tau2_cmd: [tau2]             # e.g. [uv, run, --project, ../tau2-bench, tau2]
+out_dir: runs/tau2           # where results are read from (point at tau2's data/simulations)
+total_rollouts_planned: 4500

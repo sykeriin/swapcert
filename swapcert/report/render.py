@@ -26,6 +26,7 @@ def render_markdown(title: str, est: Estimate, dec: Decision, extra: dict[str, E
         lines += ["", "| Method | Δ̂ | CI | width |", "|---|---|---|---|"]
         for name, e in extra.items():
             lines.append(f"| {name} | {e.delta:+.3f} | [{e.lo:+.3f}, {e.hi:+.3f}] | {e.width:.3f} |")
-    lines += ["", "_Validity holds for any simulator quality provided the real runs were sampled "
-              "uniformly (or with the logged probabilities); simulator quality only changes the width._"]
+    note = ("_Validity holds for any simulator quality provided the real runs were sampled "
+            "uniformly (or with the logged probabilities); simulator quality only changes the width._")
+    lines += ["", note]
     return "\n".join(lines) + "\n"

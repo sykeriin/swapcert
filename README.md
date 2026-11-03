@@ -4,7 +4,7 @@ Decide whether swapping the model behind an agent (model A → B) lowers task su
 cheap **simulated** rollouts plus a few **real** ones, with a confidence interval on
 Δsuccess = success(B) − success(A) that stays valid however bad the simulator is.
 
-Status: **Phase 0 (no LLM needed).** The statistics core, trace schema, forking, a toy
+Status: **Phase 0 + tau2 adapter and `bench-local` (unvalidated against a real tau2 run).** The statistics core, trace schema, forking, a toy
 environment and the CLI work and are tested. The τ²-bench integration and the LLM-backed
 simulator (plan weeks 1–4) are **not built yet**. Nothing here is evidence about real agents.
 
@@ -25,6 +25,20 @@ uv venv && uv pip install -e ".[dev]"
 .venv/bin/swapcert demo               # toy end-to-end experiment
 .venv/bin/swapcert estimate table.csv --tolerance 0.10   # task_id,y_a,s_b,y_b(blank=not run),novelty
 ```
+
+## Laptop runbook (WSL, RTX 3050 4 GB)
+```bash
+# terminal 1: agent model on the GPU
+ollama serve                                   # :11434
+ollama pull qwen3:4b
+# terminal 2: FIXED user simulator, CPU only (skip for telecom solo mode)
+CUDA_VISIBLE_DEVICES="" OLLAMA_HOST=127.0.0.1:11435 ollama serve
+OLLAMA_HOST=127.0.0.1:11435 ollama pull qwen3:1.7b
+# terminal 3: install tau2-bench next to this repo (needs Python 3.12-3.13), then
+uv run swapcert bench-local --config exp/laptop.yaml --tasks 10   # prints speed + gates G1-G3
+```
+Edit `exp/laptop.yaml` (`tau2_cmd`, `out_dir`) to point at your tau2 install. See `docs/tau2-notes.md`
+for what is verified and what is not.
 
 ## Honest limitations (read before trusting any number)
 - **Validity needs the real runs to be sampled uniformly** (or with logged inclusion probabilities).

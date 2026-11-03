@@ -1,0 +1,39 @@
+{
+  "timestamp": "2026-11-03T10:00:00",
+  "info": {"seed": 300},
+  "tasks": [],
+  "simulations": [
+    {
+      "task_id": "0", "trial": 0, "seed": 300, "duration": 41.5,
+      "termination_reason": "user_stop",
+      "reward_info": {"reward": 1.0},
+      "messages": [
+        {"role": "user", "content": "Hi, I want to cancel order #W1."},
+        {"role": "assistant", "content": null, "tool_calls": [
+          {"id": "c1", "name": "get_order_details", "arguments": {"order_id": "#W1"}, "requestor": "assistant"}]},
+        {"role": "tool", "id": "c1", "content": "{\"status\": \"pending\"}", "requestor": "assistant", "error": false},
+        {"role": "assistant", "content": "Your order is pending. Shall I cancel it?"},
+        {"role": "user", "content": "Yes please."},
+        {"role": "assistant", "content": null, "tool_calls": [
+          {"id": "c2", "name": "cancel_pending_order", "arguments": {"order_id": "#W1", "reason": "no longer needed"}, "requestor": "assistant"}]},
+        {"role": "tool", "id": "c2", "content": "cancelled", "requestor": "assistant", "error": false},
+        {"role": "assistant", "content": "Done."},
+        {"role": "user", "content": "Thanks. ###STOP###"}
+      ]
+    },
+    {
+      "task_id": "1", "trial": 0, "seed": 300, "duration": 12.0,
+      "termination_reason": "too_many_errors",
+      "reward_info": {"reward": 0.0},
+      "messages": [
+        {"role": "user", "content": "Where is my order?"},
+        {"role": "assistant", "content": null, "tool_calls": [
+          {"id": "a", "name": "get_order_details", "arguments": {"order_id": "#W2"}, "requestor": "assistant"},
+          {"id": "b", "name": "get_user_details", "arguments": {"user_id": "u1"}, "requestor": "assistant"}]},
+        {"role": "tool", "tool_messages": [
+          {"id": "a", "role": "tool", "content": "Error: not found", "requestor": "assistant", "error": true},
+          {"id": "b", "role": "tool", "content": "{\"name\": \"Ann\"}", "requestor": "assistant", "error": false}]}
+      ]
+    }
+  ]
+}

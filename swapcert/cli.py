@@ -65,6 +65,42 @@ def demo(tasks: int = 278, tolerance: float = 0.03, reps: int = 300):
         typer.echo(f"{r.method:16s} {r.n:4d} {r.coverage:6.3f} {r.width:6.3f} {r.p_correct:10.2f} {r.p_inconclusive:8.2f}")
 
 
+@app.command("bench-local")
+def bench_local(
+    config: Path = typer.Option(Path("exp/laptop.yaml"), help="Serving config (see exp/laptop.yaml)."),
+    tasks: int = typer.Option(10, help="Number of tau2 tasks to run."),
+    skip_tau2: bool = typer.Option(False, help="Only measure raw throughput."),
+):
+    """Measure speed and tau2 success on this machine, then evaluate the go/no-go gates."""
+    from swapcert import bench
+    from swapcert.serving import load_config
+
+    cfg = load_config(config)
+    for ep in [cfg.agent] + ([cfg.user] if cfg.user else []):
+        p = bench.probe_endpoint(ep)
+        typer.echo(f"{ep.model}: prefill {p.prefill_s:.1f}s for {p.prompt_tokens} tokens, decode {p.decode_tok_s:.1f} tok/s")
+    if skip_tau2:
+        return
+    ids = [str(i) for i in range(tasks)]
+    run = bench.run_tau2(cfg, ids)
+    gates, _ = bench.evaluate_gates(run, cfg.total_rollouts_planned)
+    for g in gates:
+        typer.echo(f"[{'PASS' if g.passed else 'FAIL'}] {g.name}: {g.detail}")
+    typer.echo("All gates passed." if all(g.passed for g in gates) else "Not all gates passed -- do not scale up yet.")
+
+
+@app.command("import-tau2")
+def import_tau2(results: Path, out: Path, model: str = typer.Option(..., help="Model label for these runs.")):
+    """Convert a tau2 results.json (or results dir) into swapcert trajectories (JSONL)."""
+    from swapcert.envs.tau2_adapter import load_results
+    from swapcert.traces.schema import write_jsonl
+
+    trajs = load_results(results, model)
+    write_jsonl(str(out), trajs)
+    scored = [t.success for t in trajs if t.success is not None]
+    typer.echo(f"{len(trajs)} runs, mean success {sum(scored) / max(len(scored), 1):.3f} -> {out}")
+
+
 @app.command("convert-otel")
 def convert_otel(src: Path, dst: Path):
     from swapcert.traces.otel import to_otel
