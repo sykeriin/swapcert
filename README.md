@@ -4,7 +4,7 @@ Decide whether swapping the model behind an agent (model A → B) lowers task su
 cheap **simulated** rollouts plus a few **real** ones, with a confidence interval on
 Δsuccess = success(B) − success(A) that stays valid however bad the simulator is.
 
-Status: **Phase 0 + tau2 adapter and `bench-local` (unvalidated against a real tau2 run).** The statistics core, trace schema, forking, a toy
+Status: **Phase 0 + tau2 adapter, `bench-local`, and the simulator pipeline (worldbook, LLM tool simulator, outcome judge, novelty, text-aware forking) tested against mocks only. Nothing has run against a real tau2 or a real LLM yet.** The statistics core, trace schema, forking, a toy
 environment and the CLI work and are tested. The τ²-bench integration and the LLM-backed
 simulator (plan weeks 1–4) are **not built yet**. Nothing here is evidence about real agents.
 
@@ -23,6 +23,8 @@ simulator (plan weeks 1–4) are **not built yet**. Nothing here is evidence abo
 uv venv && uv pip install -e ".[dev]"
 .venv/bin/pytest                      # includes Monte Carlo coverage tests (~30 s)
 .venv/bin/swapcert demo               # toy end-to-end experiment
+.venv/bin/swapcert simulate t.csv --toy --n-real 60   # fork B on A's runs -> per-task table
+.venv/bin/swapcert estimate t.csv --tolerance 0.05     # table -> decision report
 .venv/bin/swapcert estimate table.csv --tolerance 0.10   # task_id,y_a,s_b,y_b(blank=not run),novelty
 ```
 
@@ -39,6 +41,14 @@ uv run swapcert bench-local --config exp/laptop.yaml --tasks 10   # prints speed
 ```
 Edit `exp/laptop.yaml` (`tau2_cmd`, `out_dir`) to point at your tau2 install. See `docs/tau2-notes.md`
 for what is verified and what is not.
+
+## Known gaps in the simulator pipeline
+- After the fork, an agent message addressed to the user ends the episode unless the simulator has
+  a `reply` method; there is no user-simulator arm yet, so tasks needing user interaction are
+  judged on a truncated transcript.
+- Novelty uses (tool, previous tool) only, not arguments.
+- Tests use scripted mock LLMs: they prove plumbing and invariants (no model leakage, determinism,
+  counted fallbacks), not simulator fidelity.
 
 ## Honest limitations (read before trusting any number)
 - **Validity needs the real runs to be sampled uniformly** (or with logged inclusion probabilities).

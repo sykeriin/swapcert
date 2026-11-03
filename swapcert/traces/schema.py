@@ -55,3 +55,20 @@ def write_jsonl(path: str, trajs: list[Trajectory]) -> None:
 def read_jsonl(path: str) -> list[Trajectory]:
     with open(path) as f:
         return [Trajectory.from_json(line) for line in f if line.strip()]
+
+
+def call_result_pairs(events: list[Event]) -> list[tuple[Event, Event]]:
+    """Pair each agent tool_call with its tool_result, robust to parallel calls.
+
+    Calls waiting for a result are kept in order; a result consumes the first pending call with
+    the same tool name (or simply the first pending call if the result carries no name).
+    """
+    pending: list[Event] = []
+    pairs: list[tuple[Event, Event]] = []
+    for e in events:
+        if e.kind == "tool_call":
+            pending.append(e)
+        elif e.kind == "tool_result" and pending:
+            idx = next((i for i, c in enumerate(pending) if e.name in (None, c.name)), 0)
+            pairs.append((pending.pop(idx), e))
+    return pairs

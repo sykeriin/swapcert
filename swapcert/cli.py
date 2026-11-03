@@ -65,6 +65,34 @@ def demo(tasks: int = 278, tolerance: float = 0.03, reps: int = 300):
         typer.echo(f"{r.method:16s} {r.n:4d} {r.coverage:6.3f} {r.width:6.3f} {r.p_correct:10.2f} {r.p_inconclusive:8.2f}")
 
 
+@app.command()
+def simulate(
+    out: Path = typer.Argument(..., help="Per-task CSV to write (input for `swapcert estimate`)."),
+    toy: bool = typer.Option(False, help="Run on the built-in toy environment (no LLM needed)."),
+    tasks: int = 278,
+    n_real: int = typer.Option(60, help="How many tasks keep their real y_b label in the CSV."),
+    k: int = typer.Option(3, help="Simulated continuations per task."),
+    seed: int = 0,
+):
+    """Fork candidate B on A's recorded runs and write the per-task table."""
+    if not toy:
+        raise typer.BadParameter("only --toy is available until the tau2 driver is validated on the laptop")
+    from swapcert.envs.toy import MockAgent, make_tasks, run_real
+    from swapcert.exp.dataset import simulate_table, write_table
+    from swapcert.novelty.knn import NoveltyIndex
+    from swapcert.sim.toy_sim import ToySim
+
+    a, b = MockAgent("A", 0.5), MockAgent("B", 0.4, style=1)
+    ts = make_tasks(tasks, seed)
+    a_runs = [run_real(t, a, seed=1000) for t in ts]
+    half = len(ts) // 2  # simulator is built from half of A's runs only
+    y_b = [sum(run_real(t, b, seed=s).success for s in range(4)) / 4 for t in ts]
+    rows = simulate_table(ts, a_runs, b, lambda _t: ToySim(a_runs[:half], error=0.1, seed=seed),
+                          NoveltyIndex(a_runs[:half]), k=k, y_b=y_b)
+    write_table(rows, out, n_real=n_real, seed=seed)
+    typer.echo(f"wrote {len(rows)} rows ({min(n_real, len(rows))} with real y_b) -> {out}")
+
+
 @app.command("bench-local")
 def bench_local(
     config: Path = typer.Option(Path("exp/laptop.yaml"), help="Serving config (see exp/laptop.yaml)."),
