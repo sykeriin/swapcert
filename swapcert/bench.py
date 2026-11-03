@@ -95,3 +95,12 @@ def evaluate_gates(run: TauRun, total_rollouts: int) -> tuple[list[Gate], float]
              f"{run.error_rate:.0%}; terminations: {run.termination}"),
     ]
     return gates, hours
+
+
+def record(cfg: ServingConfig, task_ids: list[str], save_to: str, num_trials: int = 1,
+           agent: Endpoint | None = None) -> Path:
+    """Run `tau2 run` for one agent over the given tasks (resumable via --auto-resume) and return
+    the results path.  This is how model A's 'production logs' and each B's ground truth are made."""
+    Path(cfg.out_dir).mkdir(parents=True, exist_ok=True)
+    subprocess.run(build_run_args(cfg, task_ids, save_to, num_trials, agent), check=True)
+    return results_path(cfg, save_to)

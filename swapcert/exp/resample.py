@@ -43,7 +43,8 @@ def feature_sets(y_a, s_b, nov, replay=None) -> dict[str, np.ndarray | None]:
     return fs
 
 
-def run(y_a, y_b, s_b, nov, budgets, tolerance=0.10, reps=500, seed=0, alpha=0.05, replay=None) -> list[Row]:
+def run(y_a, y_b, s_b, nov, budgets, tolerance=0.10, reps=500, seed=0, alpha=0.05, replay=None,
+        active=False, active_floor=0.3) -> list[Row]:
     rng = np.random.default_rng(seed)
     d = y_b - y_a
     big_n = len(d)
@@ -52,7 +53,7 @@ def run(y_a, y_b, s_b, nov, budgets, tolerance=0.10, reps=500, seed=0, alpha=0.0
     fsets = feature_sets(y_a, s_b, nov, replay)
     rows: list[Row] = []
     for n in budgets:
-        acc: dict[str, list] = {k: [] for k in list(fsets) + ["betting-real"]}
+        acc: dict[str, list] = {k: [] for k in list(fsets) + ["betting-real"] + (["P6 active"] if active else [])}
         for _ in range(reps):
             idx = rng.choice(big_n, n, replace=False)
             un = np.setdiff1d(np.arange(big_n), idx)
@@ -65,7 +66,20 @@ def run(y_a, y_b, s_b, nov, budgets, tolerance=0.10, reps=500, seed=0, alpha=0.0
                 acc[name].append((est, decide(est, tolerance).verdict))
             est = betting_classical(d[idx], alpha)
             acc["betting-real"].append((est, decide(est, tolerance).verdict))
+            if active:  # novelty-weighted Poisson sampling with IPW (known inclusion probabilities)
+                pi = E.poisson_inclusion_probs(nov + 0.1, n, floor=active_floor)
+                lab = np.flatnonzero(rng.random(big_n) < pi)
+                if len(lab) >= 10:
+                    ul = np.setdiff1d(np.arange(big_n), lab)
+                    x = fsets["P6 sim+novelty"]
+                    f_r, f_u = E.cross_fit(x[lab], d[lab], x[ul], seed=int(rng.integers(1 << 30)))
+                    f_all = np.zeros(big_n)
+                    f_all[lab], f_all[ul] = f_r, f_u
+                    est = E.active_ppi(d[lab], f_all, lab, pi, alpha)
+                    acc["P6 active"].append((est, decide(est, tolerance).verdict))
         for name, res in acc.items():
+            if not res:
+                continue
             cov = np.mean([e.covers(truth) for e, _ in res])
             w = np.mean([e.width for e, _ in res])
             decisive = [v for _, v in res if v != Verdict.INCONCLUSIVE]

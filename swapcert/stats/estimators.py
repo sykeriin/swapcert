@@ -131,9 +131,8 @@ def cross_fit(
     x_real = np.atleast_2d(np.asarray(x_real, float))
     if x_real.shape[0] != len(d_real):
         x_real = x_real.T
-    x_un = np.asarray(x_unlabeled, float)
-    x_un = x_un.reshape(len(x_un), -1)
     x_real = x_real.reshape(len(d_real), -1)
+    x_un = np.asarray(x_unlabeled, float).reshape(-1, x_real.shape[1])  # tolerates an empty unlabelled set
     n = len(d_real)
     k = min(k, n)
     rng = np.random.default_rng(seed)

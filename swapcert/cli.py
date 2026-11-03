@@ -117,6 +117,55 @@ def bench_local(
     typer.echo("All gates passed." if all(g.passed for g in gates) else "Not all gates passed -- do not scale up yet.")
 
 
+@app.command()
+def record(
+    name: str = typer.Argument(..., help="Run name, e.g. A or B-quant. Becomes tau2 --save-to and the output folder."),
+    config: Path = typer.Option(Path("exp/laptop.yaml")),
+    model: str | None = typer.Option(None, help="Override the agent model for this run (use for candidate B)."),
+    tasks: int = typer.Option(0, help="First N task ids; 0 = let tau2 run the whole domain."),
+    trials: int = typer.Option(1),
+    out: Path | None = typer.Option(None, help="Also convert the result into trajectories JSONL here."),
+):
+    """Run tau2 for one model (resumable) -- records model A's logs or a candidate B's ground truth."""
+    from dataclasses import replace
+
+    from swapcert import bench
+    from swapcert.envs.tau2_adapter import load_results
+    from swapcert.serving import load_config
+    from swapcert.traces.schema import write_jsonl
+
+    cfg = load_config(config)
+    agent = replace(cfg.agent, model=model) if model else cfg.agent
+    path = bench.record(cfg, [str(i) for i in range(tasks)], name, trials, agent)
+    trajs = load_results(path, agent.model)
+    typer.echo(f"{len(trajs)} runs in {path}")
+    if out:
+        write_jsonl(str(out), trajs)
+        typer.echo(f"wrote {out}")
+
+
+@app.command()
+def experiment(
+    out: Path = typer.Argument(..., help="Output directory (results.json, summary.md, figures)."),
+    toy: bool = typer.Option(False, help="Run the built-in toy swap pairs (no LLM)."),
+    tasks: int = 200,
+    tolerance: float = 0.05,
+    reps: int = 150,
+    active: bool = typer.Option(False, help="Also evaluate novelty-weighted active sampling."),
+):
+    """Run several swap pairs and write coverage / decision tables and figures."""
+    if not toy:
+        raise typer.BadParameter("only --toy is available until the tau2 driver is validated on the laptop")
+    from swapcert.exp.runner import run_experiment
+
+    res = run_experiment(out, tasks, tolerance, reps=reps, active=active)
+    for name, p in res["pairs"].items():
+        s = p["single_draw"]
+        typer.echo(f"{name:16s} true Δ {p['true_delta']:+.3f} ({p['true_verdict']}) | one draw n={s['n_real']}: "
+                   f"{s['verdict']} CI [{s['ci'][0]:+.3f}, {s['ci'][1]:+.3f}]")
+    typer.echo(f"wrote {out}/summary.md, results.json, fig_correct.svg, fig_width.svg")
+
+
 @app.command("import-tau2")
 def import_tau2(results: Path, out: Path, model: str = typer.Option(..., help="Model label for these runs.")):
     """Convert a tau2 results.json (or results dir) into swapcert trajectories (JSONL)."""
