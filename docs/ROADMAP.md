@@ -84,6 +84,9 @@ GPU-hours (150-250 h total) are the binding constraint at $0, so expect slippage
   warns. The betting interval is valid but 3-4x wider, so rarely decisive at n <~ 100.
 - On toy data the A-as-proxy baseline (P1) matches the simulator arms, and novelty-weighted active sampling did not beat
   uniform sampling. Both need re-testing on real data; do not claim either way yet.
+- Toy A->A control: true delta averaged -0.014 (spread 0.014 across 8 task sets of 300), single draws on 120-200 tasks reached
+  -0.05 to -0.10 from sampling noise of one logged run per task. A small negative offset (~2.8 s.e.) is unexplained; it is
+  immaterial at a 0.05 tolerance but check the real A->A control for a systematic gap before trusting any pair.
 - With tau2's 278 tasks a +/-5pp interval is out of reach; plan on a ~10pp tolerance.
 - Position against GLIDE (arXiv 2605.31278), which already applies PPI to agent evaluation with a judge as the proxy.
 - Results on 2-4B models say little about swaps between frontier models.
