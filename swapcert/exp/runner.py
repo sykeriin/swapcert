@@ -67,14 +67,14 @@ def run_experiment(out_dir: str | Path, n_tasks: int = 200, tolerance: float = 0
                 pooled[r.method][r.n].append(r.p_correct)
         for r in rows:
             width[r.method][r.n].append(r.width)
-    (out / "results.json").write_text(json.dumps(results, indent=2))
+    (out / "results.json").write_text(json.dumps(results, indent=2), encoding="utf-8")
     series = {m: [(n, float(np.mean(v))) for n, v in sorted(by_n.items())] for m, by_n in pooled.items()}
     line_chart_svg(series, "P(correct decisive call) vs real runs (toy, mean over non-borderline pairs)",
                    "real runs of B", "P(correct)", out / "fig_correct.svg", ylim=(0, 1))
     wser = {m: [(n, float(np.mean(v))) for n, v in sorted(by_n.items())] for m, by_n in width.items()}
     line_chart_svg(wser, "95% CI width vs real runs (toy, mean over all pairs)", "real runs of B",
                    "CI width", out / "fig_width.svg")
-    (out / "summary.md").write_text(_summary(results))
+    (out / "summary.md").write_text(_summary(results), encoding="utf-8")
     return results
 
 

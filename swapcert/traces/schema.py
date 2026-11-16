@@ -48,12 +48,12 @@ class Trajectory:
 
 
 def write_jsonl(path: str, trajs: list[Trajectory]) -> None:
-    with open(path, "w") as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.writelines(t.to_json() + "\n" for t in trajs)
 
 
 def read_jsonl(path: str) -> list[Trajectory]:
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return [Trajectory.from_json(line) for line in f if line.strip()]
 
 

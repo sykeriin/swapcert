@@ -56,7 +56,7 @@ def write_table(rows: list[dict], path: str | Path, n_real: int | None = None, s
     keep = set(range(len(rows)))
     if n_real is not None:
         keep = set(np.random.default_rng(seed).choice(len(rows), min(n_real, len(rows)), replace=False).tolist())
-    with open(path, "w", newline="") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, COLUMNS)
         w.writeheader()
         for i, r in enumerate(rows):

@@ -28,7 +28,7 @@ def estimate(
     alpha: float = typer.Option(0.05),
     out: Path | None = typer.Option(None, help="Write the Markdown report here."),
 ):
-    rows = list(csv.DictReader(table.open()))
+    rows = list(csv.DictReader(table.open(encoding="utf-8")))
     y_a = np.array([float(r["y_a"]) for r in rows])
     s_b = np.array([float(r["s_b"]) for r in rows])
     nov = np.array([float(r.get("novelty") or 0) for r in rows])
@@ -46,7 +46,7 @@ def estimate(
                          float(np.std(d - (est.lam or 0) * f_r, ddof=1)), reliability_warning(d), alpha)
     typer.echo(md)
     if out:
-        out.write_text(md)
+        out.write_text(md, encoding="utf-8")
 
 
 @app.command()
@@ -183,7 +183,7 @@ def convert_otel(src: Path, dst: Path):
     from swapcert.traces.otel import to_otel
     from swapcert.traces.schema import read_jsonl
 
-    with dst.open("w") as f:
+    with dst.open("w", encoding="utf-8") as f:
         for t in read_jsonl(str(src)):
             f.write(json.dumps(to_otel(t)) + "\n")
 

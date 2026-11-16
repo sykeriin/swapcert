@@ -52,4 +52,4 @@ def line_chart_svg(series: dict[str, list[tuple[float, float]]], title: str, xla
         o.append(f'<line x1="{W - R + 8}" y1="{ly}" x2="{W - R + 28}" y2="{ly}" stroke="{c}" stroke-width="2"/>')
         o.append(f'<text x="{W - R + 34}" y="{ly + 4}">{escape(name)}</text>')
     o.append("</svg>")
-    Path(path).write_text("\n".join(o))
+    Path(path).write_text("\n".join(o), encoding="utf-8")
